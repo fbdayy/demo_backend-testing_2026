@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 
-# ─── Аргументы, единожды заданные в начале ────────────────────────────────────
+# ─── Arguments, set once at the beginning ──────────────────────────────────────
 ARG NODE_VERSION=22.16.0
 ARG PNPM_VERSION=11.9.0
 ARG OPENSSL_VERSION=3.5.7-r0
 ARG ALPINE_VERSION=3.22
 
 # ════════════════════════════════════════════════════════════════════════════════
-# STAGE: base — минимальный слой с pnpm и рабочей директорией
+# STAGE: base — minimal layer with pnpm and working directory
 # ════════════════════════════════════════════════════════════════════════════════
 FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS base
 
@@ -22,7 +22,7 @@ RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 WORKDIR /app
 
 # ════════════════════════════════════════════════════════════════════════════════
-# STAGE: deps — только prod-зависимости (для финального образа)
+# STAGE: deps — only prod dependencies (for final image)
 # ════════════════════════════════════════════════════════════════════════════════
 FROM base AS deps
 
@@ -32,7 +32,7 @@ COPY backend/package.json ./backend/package.json
 RUN pnpm install --filter backend --frozen-lockfile --prod --ignore-scripts
 
 # ════════════════════════════════════════════════════════════════════════════════
-# STAGE: dev-deps — все зависимости включая devDependencies
+# STAGE: dev-deps — all dependencies including devDependencies
 # ════════════════════════════════════════════════════════════════════════════════
 FROM base AS dev-deps
 
@@ -42,7 +42,7 @@ COPY backend/package.json ./backend/package.json
 RUN pnpm install --filter backend --frozen-lockfile --ignore-scripts
 
 # ════════════════════════════════════════════════════════════════════════════════
-# STAGE: development — hot-reload образ для локальной разработки
+# STAGE: development — hot-reload image for local development
 # ════════════════════════════════════════════════════════════════════════════════
 FROM base AS development
 
@@ -55,28 +55,28 @@ COPY pnpm-workspace.yaml ./
 COPY backend/package.json ./backend/package.json
 COPY backend/tsconfig*.json ./backend/
 
-# Переключаемся в backend ДО generate, чтобы prisma нашла schema и node_modules
+# Switch to backend BEFORE generate so that prisma finds schema and node_modules
 WORKDIR /app/backend
 
-# prisma/schema.prisma монтируется volume'ом в рантайме, но generate нужен
-# при сборке образа — копируем схему явно для этого шага
+# prisma/schema.prisma is mounted as a volume at runtime, but generate is needed
+# at build time — copy the schema explicitly for this step
 COPY backend/prisma ./prisma
 
-# Запускаем generate из /app/backend — prisma найдёт ./prisma/schema.prisma
-# и положит клиент в ./node_modules/.prisma/client (защищён анонимным volume)
+# Run generate from /app/backend — prisma will find ./prisma/schema.prisma
+# and place the client in ./node_modules/.prisma/client (protected by an anonymous volume)
 RUN pnpm prisma generate
 
 EXPOSE 3000
-# Node.js inspector для дебаггера IDE
+# Node.js inspector for IDE debugger
 EXPOSE 9229
-# Prisma Studio (сервис prisma-studio переопределяет CMD)
+# Prisma Studio (the prisma-studio service overrides CMD)
 EXPOSE 5555
 
-# docker-compose.override.yml переопределяет эту команду через `command`
+# docker-compose.override.yml overrides this command via `command`
 CMD ["pnpm", "dev"]
 
 # ════════════════════════════════════════════════════════════════════════════════
-# STAGE: builder — компилируем TypeScript для production
+# STAGE: builder — compile TypeScript for production
 # ════════════════════════════════════════════════════════════════════════════════
 FROM base AS builder
 
@@ -92,7 +92,7 @@ RUN pnpm prisma generate \
  && pnpm build
 
 # ════════════════════════════════════════════════════════════════════════════════
-# STAGE: production — финальный минимальный образ
+# STAGE: production — final minimal image
 # ════════════════════════════════════════════════════════════════════════════════
 FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS production
 
@@ -118,5 +118,5 @@ WORKDIR /app/backend
 
 EXPOSE 3000
 
-# NestJS компилируется в dist/main.js
+# NestJS compiles to dist/main.js
 CMD ["node", "dist/main.js"]
