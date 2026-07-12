@@ -1,0 +1,34 @@
+# Этот файл применяется автоматически поверх docker-compose.yml при локальной разработке.
+# Для prod-сборки передайте явно: docker compose -f docker-compose.yml up
+
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  backend:
+    build:
+      target: development
+    command: pnpm dev
+    environment:
+      NODE_ENV: development
+      NODE_VERSION: ${NODE_VERSION:-22.16.0}
+      PNPM_VERSION: ${PNPM_VERSION:-11.9.0}
+      OPENSSL_VERSION: ${OPENSSL_VERSION:-3.5.7-r0}
+      ALPINE_VERSION: ${ALPINE_VERSION:-3.22}
+    volumes:
+      # Исходники монтируем для hot reload — NestJS --watch подхватит изменения
+      - ./backend/src:/app/backend/src
+      
+      # schema.prisma монтируем отдельно: при изменении схемы нужно вручную
+      # пересобрать образ (pnpm prisma generate), volume лишь синхронизирует файл
+      - ./backend/prisma:/app/backend/prisma
+      
+      # Анонимный том: node_modules живут внутри контейнера и не перезаписываются хостом.
+      # Сюда же попадает сгенерированный Prisma Client (.prisma/client)
+      - backend_node_modules:/app/backend/node_modules
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+
+volumes:
+  backend_node_modules:

@@ -1,0 +1,16 @@
+packages:
+  - backend
+  - frontend
+allowBuilds:
+  '@scarf/scarf': true
+  bcrypt: true
+minimumReleaseAgeExclude:
+  - '@hono/node-server@1.19.13'
+  - multer@2.2.0
+  - tmp@0.2.4 || 0.2.6
+overrides:
+  '@hono/node-server@<1.19.13': ^1.19.13
+  multer@>=1.0.0 <2.2.0: ^2.2.0
+  multer@>=2.0.0-alpha.1 <2.2.0: ^2.2.0
+  tmp@<0.2.6: ^0.2.6
+  tmp@<=0.2.3: ^0.2.4

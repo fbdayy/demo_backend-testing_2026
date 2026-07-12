@@ -1,0 +1,126 @@
+// ── Config (DO NOT TOUCH WITHOUT UNDERSTANDING!) ─────────────────────────────
+// Part of the config due to Prisma V7 in root/backend/prisma.config.ts
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  moduleFormat  = "cjs"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+// ── Enums ──────────────────────────────────────────────────────────────────
+// Store ticker for the base currency, but operations are in its elementary unit
+enum SupportedTickers {
+  PET // 1 PET = 10^8 PAW
+  CAT // 1 CAT = 10^6 CLAW
+}
+
+// Transaction type.
+// IMPORTANT! For context: we view balance from the exchange's perspective
+enum EntryType {
+  debit  // Decrease of account balance (-)
+  credit // Increase of account balance (+)
+}
+
+// Status of internal transfer between accounts
+enum TransferStatus {
+  pending
+  completed
+  failed
+}
+
+// ── Models ───────────────────────────────────────────────────────────────────
+
+// One person can have only one account per ticker
+model Owner {
+  // ── Scalar fields ─────────────────────────────────────────────────────────
+  id                 String  @id @default(uuid())
+  publicAddress      String  @unique // ETH address in checksum format (EIP-55), e.g., 0xAbC..123
+  nonce              String? // one-time nonce for login signature
+  hashedRefreshToken String? // bcrypt hash of the current refresh token (for rotation/logout)
+
+  // ── Relation lists ──────────────────────────────────────────────────────────
+  accounts           Account[]
+}
+
+model Account {
+  // ── Scalar fields ─────────────────────────────────────────────────────────
+  id        String           @id @default(uuid())
+  ownerId   String
+  ticker    SupportedTickers
+
+  // ── One-to-one/one-to-many relations ─────────────────────────────────────
+  owner     Owner            @relation(fields: [ownerId], references: [id])
+  balance   AccountBalance?
+
+  // ── Relation lists ──────────────────────────────────────────────────────────
+  entries       LedgerEntry[]
+  transfersFrom Transfer[]    @relation("FromAccount")
+  transfersTo   Transfer[]    @relation("ToAccount")
+
+  // ── Indexes and constraints ─────────────────────────────────────────────
+  @@unique([ownerId, ticker])
+}
+
+/* Here we store the user's cached balance.
+ * Even though we primarily work with it for operations, it is not the source of truth.
+ * It is merely a cache, but it is derived by summing debits and credits from LedgerEntry
+ */
+model AccountBalance {
+  // ── Scalar fields ─────────────────────────────────────────────────────────
+  id        String   @id @default(uuid())
+  accountId String   @unique
+  balance   BigInt   @default(0) // Value in elementary units (PAW/CLAW)
+  updatedAt DateTime @updatedAt
+
+  // ── One-to-one/one-to-many relations ─────────────────────────────────────
+  account   Account  @relation(fields: [accountId], references: [id])
+}
+
+// Ledger entry for balance accounting
+model LedgerEntry {
+  // ── Scalar fields ─────────────────────────────────────────────────────────
+  id          String    @id @default(uuid())
+  accountId   String
+  type        EntryType
+  amount      BigInt    // Use |amount| ≥ 0 even for debits
+  description String?
+  createdAt   DateTime  @default(now())
+  transferId  String?
+
+  // ── One-to-one/one-to-many relations ─────────────────────────────────────
+  account  Account   @relation(fields: [accountId], references: [id])
+  transfer Transfer? @relation(fields: [transferId], references: [id])
+
+  // ── Indexes and constraints ─────────────────────────────────────────────
+  @@index([accountId])
+  @@index([createdAt])
+}
+
+// Atomic transfer of funds between two internal accounts
+model Transfer {
+  // ── Scalar fields ─────────────────────────────────────────────────────────
+  id            String         @id @default(uuid())
+  fromAccountId String
+  toAccountId   String
+  amount        BigInt
+  status        TransferStatus @default(pending)
+  createdAt     DateTime       @default(now())
+
+  // ── One-to-one/one-to-many relations ─────────────────────────────────────
+  fromAccount Account @relation("FromAccount", fields: [fromAccountId], references: [id])
+  toAccount   Account @relation("ToAccount", fields: [toAccountId], references: [id])
+
+  // ── Relation lists ──────────────────────────────────────────────────────────
+  // Reverse relation: one transfer generates two ledger entries (debit and credit)
+  ledgerEntries LedgerEntry[]
+
+  // ── Indexes and constraints ─────────────────────────────────────────────
+  @@index([fromAccountId])
+  @@index([toAccountId])
+  @@index([status])
+  @@index([createdAt])
+}
