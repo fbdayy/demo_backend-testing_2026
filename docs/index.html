@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Bank API — README</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12161c;
+    --ink-2:#1b212a;
+    --paper:#faf9f6;
+    --paper-2:#f1efe8;
+    --text:#1b1f27;
+    --muted:#6b7280;
+    --rule:#e3e0d6;
+    --ledger:#2f6f5c;
+    --ledger-soft:#e7f0ec;
+    --amber:#a8752c;
+    --amber-soft:#f6ecdb;
+    --code-bg:#14181f;
+    --code-text:#e7e5df;
+    --code-muted:#8b93a1;
+    --maxw:760px;
+    --sidebar-w:280px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    font-size:16px;
+    line-height:1.65;
+  }
+
+  a{color:var(--ledger);}
+  a:hover{text-decoration-thickness:2px;}
+
+  :focus-visible{
+    outline:2px solid var(--ledger);
+    outline-offset:2px;
+    border-radius:2px;
+  }
+
+  /* ---------- layout ---------- */
+  .shell{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .top{
+    background:var(--ink);
+    color:#f4f2ea;
+    padding:2.25rem 1.5rem 2rem;
+  }
+  .top-inner{max-width:var(--maxw); margin:0 auto;}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.75rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ledger);
+    margin:0 0 .6rem;
+  }
+  .top h1{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(1.6rem, 5vw, 2.2rem);
+    margin:0 0 .75rem;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .top p{margin:0 0 1rem; color:#cfd0c9; max-width:60ch;}
+  .tags{display:flex; flex-wrap:wrap; gap:.4rem; margin-top:1rem;}
+  .tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.72rem;
+    padding:.28rem .55rem;
+    border:1px solid #3a4048;
+    border-radius:3px;
+    color:#c9cbc2;
+  }
+
+  nav.toc{
+    background:var(--ink-2);
+    color:#e9e8e1;
+    padding:0;
+  }
+  nav.toc .toc-inner{max-width:var(--maxw); margin:0 auto; padding:.25rem 1.5rem 1.25rem;}
+  nav.toc summary{
+    cursor:pointer;
+    list-style:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.82rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ledger);
+    padding:1rem 0 .75rem;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+  }
+  nav.toc summary::-webkit-details-marker{display:none;}
+  nav.toc summary::before{
+    content:"▸";
+    display:inline-block;
+    transition:transform .15s ease;
+    font-size:.7rem;
+  }
+  nav.toc[open] summary::before{transform:rotate(90deg);}
+
+  ol.toc-list, ol.toc-sublist{list-style:none; margin:0; padding:0;}
+  ol.toc-list{counter-reset:sec;}
+  ol.toc-list > li{counter-increment:sec; margin:0 0 .15rem;}
+  ol.toc-list > li > a{
+    display:flex;
+    gap:.65rem;
+    padding:.35rem .4rem;
+    border-radius:4px;
+    color:#e9e8e1;
+    text-decoration:none;
+    font-size:.93rem;
+  }
+  ol.toc-list > li > a::before{
+    content:counter(sec, decimal-leading-zero);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.8rem;
+    color:var(--ledger);
+    flex:none;
+  }
+  ol.toc-list > li > a:hover, ol.toc-sublist > li > a:hover{background:#242b34;}
+  ol.toc-sublist{margin:.1rem 0 .3rem 1.85rem; border-left:1px solid #333a43;}
+  ol.toc-sublist > li > a{
+    display:block;
+    padding:.28rem .6rem;
+    color:#b7b9b2;
+    text-decoration:none;
+    font-size:.87rem;
+  }
+  ol.toc-sublist > li > a::before{content:"– "; color:#5b6169;}
+
+  main{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:2.5rem 1.5rem 5rem;
+  }
+
+  /* ---------- headings ---------- */
+  h2{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:1.3rem;
+    font-weight:600;
+    margin:3rem 0 .5rem;
+    padding-bottom:.6rem;
+    border-bottom:1px solid var(--rule);
+    display:flex;
+    align-items:baseline;
+    gap:.6rem;
+    scroll-margin-top:1.5rem;
+  }
+  h2 .idx{
+    font-size:.8rem;
+    color:var(--ledger);
+    font-weight:600;
+  }
+  h3{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:1.02rem;
+    font-weight:600;
+    margin:2rem 0 .6rem;
+    color:var(--ink-2);
+    scroll-margin-top:1.5rem;
+  }
+  h3::before{
+    content:"§";
+    color:var(--ledger);
+    margin-right:.4rem;
+  }
+
+  :target{
+    animation:none;
+    background:var(--ledger-soft);
+    box-shadow:-4px 0 0 var(--ledger);
+    padding-left:.6rem;
+    margin-left:-.6rem;
+    border-radius:2px;
+  }
+
+  p{margin:.75rem 0;}
+  ul, ol.plain{margin:.6rem 0; padding-left:1.4rem;}
+  li{margin:.3rem 0;}
+  strong{color:var(--ink-2);}
+
+  /* ---------- callouts ---------- */
+  blockquote.callout{
+    margin:1.1rem 0;
+    padding:.85rem 1rem;
+    border-radius:6px;
+    background:var(--amber-soft);
+    border-left:3px solid var(--amber);
+    font-size:.95rem;
+  }
+  blockquote.callout p{margin:.35rem 0;}
+  blockquote.callout--note{
+    background:var(--ledger-soft);
+    border-left-color:var(--ledger);
+    font-style:italic;
+    color:#2c3a35;
+  }
+
+  /* ---------- code ---------- */
+  code{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.86em;
+    background:var(--paper-2);
+    padding:.1em .35em;
+    border-radius:3px;
+  }
+  .code-block{margin:1rem 0;}
+  .code-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.72rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:.3rem;
+  }
+  pre{
+    background:var(--code-bg);
+    color:var(--code-text);
+    padding:1rem 1.1rem;
+    border-radius:8px;
+    overflow-x:auto;
+    margin:0;
+    line-height:1.55;
+  }
+  pre code{
+    background:none;
+    padding:0;
+    color:inherit;
+    font-size:.85rem;
+  }
+  .cmt{color:var(--code-muted);}
+
+  /* ---------- tables ---------- */
+  .table-wrap{overflow-x:auto; margin:1rem 0;}
+  table{
+    border-collapse:collapse;
+    width:100%;
+    font-size:.88rem;
+    min-width:560px;
+  }
+  th, td{
+    text-align:left;
+    padding:.55rem .7rem;
+    border-bottom:1px solid var(--rule);
+    vertical-align:top;
+  }
+  thead th{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.72rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    border-bottom:2px solid var(--ink);
+  }
+  tbody tr:hover{background:var(--paper-2);}
+
+  /* ---------- details ---------- */
+  details.note{
+    margin:1rem 0;
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:.2rem .9rem;
+    background:#fff;
+  }
+  details.note summary{
+    cursor:pointer;
+    padding:.6rem 0;
+    font-weight:600;
+    color:var(--ledger);
+  }
+  details.note p{margin:.4rem 0 .8rem;}
+
+  hr.rule{border:none; border-top:1px solid var(--rule); margin:2.5rem 0;}
+
+  footer{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:0 1.5rem 3rem;
+    color:var(--muted);
+    font-size:.82rem;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  /* ---------- desktop layout ---------- */
+  @media (min-width:900px){
+    .shell{
+      display:grid;
+      grid-template-columns:var(--sidebar-w) 1fr;
+      align-items:start;
+    }
+    .rail{
+      grid-column:1;
+      position:sticky;
+      top:0;
+      max-height:100vh;
+      overflow-y:auto;
+      border-right:1px solid #262c34;
+      display:flex;
+      flex-direction:column;
+    }
+    .top{padding:2.25rem 1.75rem 1.25rem;}
+    .top-inner{max-width:none;}
+    .top p{max-width:none;}
+    nav.toc{flex:1 1 auto;}
+    nav.toc .toc-inner{max-width:none; padding:0 1.75rem 2rem;}
+    nav.toc summary{pointer-events:none;}
+    nav.toc summary::before{display:none;}
+    .content{grid-column:2; min-width:0;}
+    main{padding:3rem 3rem 6rem;}
+    footer{padding:0 3rem 3rem;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="rail">
+
+  <header class="top">
+    <div class="top-inner">
+      <div class="eyebrow">
+        <p>README · for review purposes</p>
+        <p>English | <a href="https://fbdayy.github.io/demo_backend-testing_2026/index.ru">Русский</a></p>
+    </div>
+      <h1>Mini Bank API</h1>
+      <p>A NestJS backend for a wallet app: sign-in via an Ethereum signature, balances in two made-up tickers, atomic transfers with a ledger record.</p>
+      <div class="tags">
+        <span class="tag">NestJS 10</span>
+        <span class="tag">Prisma + PostgreSQL</span>
+        <span class="tag">ethers</span>
+        <span class="tag">JWT</span>
+        <span class="tag">Docker</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <details class="toc-inner" open>
+      <summary>Contents</summary>
+      <ol class="toc-list">
+        <li><a href="#minimum-requirements">Minimum Requirements to Run</a></li>
+        <li>
+          <a href="#tech-stack">Tech Stack</a>
+          <ol class="toc-sublist"><li><a href="#possible-additions">Possible Additions</a></li></ol>
+        </li>
+        <li><a href="#project-structure">Project Structure</a></li>
+        <li><a href="#license-and-terms">License &amp; Terms of Use</a></li>
+        <li>
+          <a href="#extra">Extra</a>
+          <ol class="toc-sublist">
+            <li><a href="#purpose">Purpose</a></li>
+            <li><a href="#llm-involvement">On LLM Involvement</a></li>
+          </ol>
+        </li>
+        <li>
+          <a href="#warnings">Warnings</a>
+          <ol class="toc-sublist">
+            <li><a href="#eth-addresses">ETH Addresses</a></li>
+            <li><a href="#env">.env</a></li>
+            <li><a href="#schema-prisma">schema.prisma</a></li>
+            <li><a href="#prisma-studio">Prisma Studio</a></li>
+          </ol>
+        </li>
+        <li>
+          <a href="#setup">Setup</a>
+          <ol class="toc-sublist">
+            <li><a href="#preparation">Preparation</a></li>
+            <li><a href="#installation-steps">Installation Steps</a></li>
+          </ol>
+        </li>
+        <li><a href="#api-docs-swagger">API Documentation (Swagger)</a></li>
+        <li>
+          <a href="#api-reference">API Reference</a>
+          <ol class="toc-sublist">
+            <li><a href="#auth">Auth — /auth</a></li>
+            <li><a href="#owners">Owners — /owners</a></li>
+            <li><a href="#accounts">Accounts — /accounts</a></li>
+            <li><a href="#transfers">Transfers — /transfers</a></li>
+            <li><a href="#example-flow-curl">Example Flow (curl)</a></li>
+          </ol>
+        </li>
+        <li><a href="#architecture-notes">Architecture Notes</a></li>
+      </ol>
+    </details>
+  </nav>
+
+  </aside>
+  <div class="content">
+  <main>
+
+    <blockquote class="callout">
+      <p>⚠️ <strong>This is a demo backend with simplified logic — it does not interact with blockchains and cannot move real funds.</strong></p>
+      <p>The ETH address is used only to create a user account. All funds and balances exist solely inside the database, in a project-specific format.</p>
+    </blockquote>
+
+    <h2 id="minimum-requirements"><span class="idx">01</span> Minimum Requirements to Run</h2>
+    <blockquote class="callout">
+      <p>⚠️ These are the requirements to run the app; changes or updates may increase them.</p>
+    </blockquote>
+    <ul>
+      <li>4 GB of free disk space</li>
+      <li>8 GB of RAM</li>
+    </ul>
+
+    <h2 id="tech-stack"><span class="idx">02</span> Tech Stack</h2>
+    <ul>
+      <li><strong>NestJS 10</strong> (REST controllers, guards, pipes, interceptors)</li>
+      <li><strong>Prisma</strong> + <code>@prisma/adapter-pg</code> (PostgreSQL via the <code>pg</code> driver adapter)</li>
+      <li><strong>Passport</strong> (<code>passport-jwt</code>) — access/refresh JWT strategies</li>
+      <li><strong>class-validator</strong> / <strong>class-transformer</strong> — request validation</li>
+      <li><strong>ethers</strong> — signature verification, address checksum</li>
+      <li><strong>bcrypt</strong> — refresh-token hashing</li>
+      <li><strong>@nestjs/swagger</strong> — OpenAPI documentation</li>
+      <li><strong>Jest</strong> — unit tests</li>
+    </ul>
+
+    <h3 id="possible-additions">Possible Additions</h3>
+    <ul>
+      <li><strong>React</strong> — frontend</li>
+      <li><strong>NestJS</strong> — WebSocket layer</li>
+    </ul>
+
+    <h2 id="project-structure"><span class="idx">03</span> Project Structure</h2>
+    <div class="code-block">
+      <pre><code>.
+├── backend/
+│   ├── prisma/
+│   │   └── schema.prisma            <span class="cmt"># data schema (account, owner models, etc.)</span>
+│   ├── src/
+│   │   ├── common/                  <span class="cmt"># utilities (BigIntInterceptor, global PrismaService)</span>
+│   │   ├── models/                  <span class="cmt"># umbrella folder for business-logic modules</span>
+│   │   │   ├── auth/                <span class="cmt"># nonce → signature → JWT access/refresh flow</span>
+│   │   │   ├── owner/               <span class="cmt"># wallet owners (by Ethereum address)</span>
+│   │   │   ├── account/             <span class="cmt"># accounts: one per owner per ticker</span>
+│   │   │   └── transfer/            <span class="cmt"># atomic balance transfers + ledger entries</span>
+│   │   ├── app.module.ts
+│   │   └── main.ts
+│   ├── Dockerfile
+│   ├── nest-cli.json
+│   ├── package.json
+│   ├── prisma.config.ts
+│   ├── tsconfig.build.json
+│   └── tsconfig.json
+├── docker-compose.yml               <span class="cmt"># core services</span>
+├── docker-compose.override.yml      <span class="cmt"># local overrides</span>
+├── .env
+├── .gitignore
+├── pnpm-workspace.yaml
+├── pnpm-lock.yaml
+└── LICENSE.md
+
+.
+├── helpers/                         <span class="cmt"># helper resources</span>
+│   └── sign.py                      <span class="cmt"># sign the auth message</span></code></pre>
+    </div>
+
+    <h2 id="license-and-terms"><span class="idx">04</span> License &amp; Terms of Use</h2>
+    <p>© 2026 fbdayy / vishnev. All rights reserved.</p>
+    <p>This project was built as a demo / take-home assignment. A prospective employer is granted the right to test, run, and review this project free of charge, for evaluation purposes.</p>
+    <p><strong>Permission validity:</strong> 21 calendar days from when the application was submitted (or until a formal rejection is received, whichever comes first).</p>
+    <p>Any commercial use, copying, modification, or integration of this code into other products without the author's written consent (<a href="mailto:vishnev.send@gmail.com">vishnev.send@gmail.com</a>) is prohibited.</p>
+    <blockquote class="callout callout--note">
+      <p>P. S. Whoever is reading this, know that I genuinely don't mind the time and effort I put in. I just don't like theft, and I don't want to end up jobless after sharing my own work. Just reach out and I'll sort it out.</p>
+    </blockquote>
+
+    <h2 id="extra"><span class="idx">05</span> Extra</h2>
+
+    <h3 id="purpose">Purpose</h3>
+    <p>This whole repo exists purely to demonstrate my testing and backend-development skills. There's no real practical value in it — think of it as a small but substantial sketch answering the question "What can you actually build?"</p>
+
+    <details class="note">
+      <summary>Comment</summary>
+      <p>I tried to balance project complexity against development time, so some parts of the structure are simplified and fall short of best practices, while others look pretty solid. But please note the main point: I do know which practices are good and which aren't. We're all human, and nobody wants to endlessly over-engineer a purely demonstrative pet project.</p>
+    </details>
+
+    <h3 id="llm-involvement">On LLM Involvement</h3>
+    <p>To save time, I used AI for the following:</p>
+    <ol class="plain">
+      <li>It translated some of my especially long in-code comments. <strong>Only comments were translated — no code was ever sent to the AI!</strong></li>
+      <li>This description file was edited directly with its help, and the English-language version was produced from it.</li>
+    </ol>
+
+    <h2 id="warnings"><span class="idx">06</span> Warnings</h2>
+
+    <h3 id="eth-addresses">ETH Addresses</h3>
+    <blockquote class="callout">
+      <p>⚠️ <strong>DO NOT use the key and address that appear in this project's source for operations involving real money!</strong></p>
+      <p>These values are publicly known and intended solely for local testing. Sending real funds to these accounts will result in their immediate, irreversible loss.</p>
+    </blockquote>
+    <div class="code-block">
+      <div class="code-label">PRIVATE_KEY</div>
+      <pre><code>0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80</code></pre>
+    </div>
+    <div class="code-block">
+      <div class="code-label">PUBLIC_ADDRESS</div>
+      <pre><code>0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266</code></pre>
+    </div>
+
+    <h3 id="env">.env</h3>
+    <blockquote class="callout">
+      <p>⚠️ If you hypothetically move this to production, <strong>make sure to change the sensitive values!</strong></p>
+      <p>In the file these are passwords and secrets. They're all initially set to <code>changeme</code>.</p>
+    </blockquote>
+
+    <h3 id="schema-prisma">schema.prisma</h3>
+    <blockquote class="callout">
+      <p>⚠️ <strong>DO NOT add CASCADE DELETION for <code>Owner → Account / LedgerEntry / ...</code>!</strong></p>
+      <p>Deleting an Owner should never delete the history of anyone's assets, or the assets themselves.</p>
+      <p>Are you a developer adding a cascade delete from Owner? Enjoy getting fired.</p>
+    </blockquote>
+
+    <h3 id="prisma-studio">Prisma Studio</h3>
+    <p>When starting Prisma Studio in Docker, the terminal may show an error. If Prisma Studio still works fine in the browser, this is a known bug and can be ignored. The error text:</p>
+    <div class="code-block">
+      <pre><code>prisma-studio-1  | [Prisma Studio] Error [ERR_STREAM_PREMATURE_CLOSE]: Premature close
+prisma-studio-1  |     at onclose (node:internal/streams/end-of-stream:162:30)
+prisma-studio-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:85:11) {
+prisma-studio-1  |   code: 'ERR_STREAM_PREMATURE_CLOSE'
+prisma-studio-1  | }</code></pre>
+    </div>
+
+    <h2 id="setup"><span class="idx">07</span> Setup</h2>
+
+    <h3 id="preparation">Preparation</h3>
+    <p>For convenient interaction with the app, I created an alias — I'll use it to shorten one-off requests. I recommend adding this function to your <code>~/.bashrc</code> while working on the project. It spins up a container on the main network that gets removed right after the request to the app completes.</p>
+    <div class="code-block">
+      <div class="code-label">bash</div>
+      <pre><code><span class="cmt">mb()</span> {
+    docker run --rm \
+      -v "$(pwd):/app" \
+      -w /app \
+      --network mini_bank_default \
+      --env-file .env \
+      mini_bank-app "$@"
+}</code></pre>
+    </div>
+
+    <blockquote class="callout">
+      <p><strong>Installation notes</strong></p>
+      <ol class="plain">
+        <li>The project uses <code>pnpm</code> as its primary package manager. This is a deliberate choice — <code>npm</code>'s limits aren't enough for installing dependencies in this environment.</li>
+        <li>Because of regional restrictions, I configured <code>.env</code> to use a Chinese mirror <code>registry</code> for installing <code>pnpm</code> packages. You can disable or change the mirror in the same file.</li>
+        <li>At the time of publishing, I worked around Docker Hub access restrictions in Russia by configuring the Docker daemon — it's worth reading up on this online. Personally, I added this mirror to its configuration:</li>
+      </ol>
+    </blockquote>
+
+    <div class="code-block">
+      <div class="code-label">json</div>
+      <pre><code>{
+  "registry-mirrors": ["https://mirror.gcr.io"]
+}</code></pre>
+    </div>
+
+    <h3 id="installation-steps">Installation Steps</h3>
+    <p>1. Set up environment variables (for example, in the <code>.env</code> file):</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><code>POSTGRES_USER</code></td><td>PostgreSQL user</td><td><code>postgres</code></td></tr>
+          <tr><td><code>POSTGRES_PASSWORD</code></td><td>PostgreSQL user password</td><td><code>changeme</code></td></tr>
+          <tr><td><code>POSTGRES_DB</code></td><td>Database name</td><td><code>app_db</code></td></tr>
+          <tr><td><code>POSTGRES_PORT</code></td><td>PostgreSQL port (optional)</td><td><code>5432</code> (default)</td></tr>
+          <tr><td><code>DATABASE_URL</code></td><td>Prisma's PostgreSQL connection string</td><td><code>postgresql://postgres:changeme@postgres:5432/app_db</code></td></tr>
+          <tr><td><code>NODE_ENV</code></td><td>Runtime environment</td><td><code>development</code></td></tr>
+          <tr><td><code>BACKEND_PORT</code></td><td>Server HTTP port</td><td><code>3000</code></td></tr>
+          <tr><td><code>JWT_ACCESS_SECRET</code></td><td>Secret for signing access tokens</td><td><code>changeme</code></td></tr>
+          <tr><td><code>JWT_REFRESH_SECRET</code></td><td>Secret for signing refresh tokens</td><td><code>changeme</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>2. Build and start the docker containers:</p>
+    <div class="code-block"><pre><code>docker compose up --build</code></pre></div>
+
+    <p>3. Create the DB migration:</p>
+    <div class="code-block"><pre><code>mb pnpm --filter=backend exec prisma migrate dev --name init</code></pre></div>
+
+    <p>4. Run the tests:</p>
+    <div class="code-block"><pre><code>mb pnpm --filter=backend run test</code></pre></div>
+
+    <h2 id="api-docs-swagger"><span class="idx">08</span> API Documentation (Swagger)</h2>
+    <p>Interactive OpenAPI documentation is available at <strong><code>/api</code></strong> once the app is running (e.g. <code>http://localhost:3000/api</code>). Each route is grouped by tag (<code>auth</code>, <code>owners</code>, <code>accounts</code>, <code>transfers</code>) with request/response schemas and example payloads. Protected routes expect a bearer token — get one via <code>POST /auth/login</code>, then click <strong>Authorize</strong> in the Swagger UI and paste it in.</p>
+
+    <h2 id="api-reference"><span class="idx">09</span> API Reference</h2>
+    <p>All request/response bodies are JSON. Fields of type <code>bigint</code> in the database (<code>balance</code>, <code>amount</code>) are serialized in responses as <strong>strings</strong> (via <code>BigIntInterceptor</code>), and are accepted the same way in requests — as strings containing a decimal integer.</p>
+    <p>🔒 = requires <code>Authorization: Bearer &lt;accessToken&gt;</code> (<code>AccessTokenGuard</code>).</p>
+
+    <h3 id="auth">Auth — <code>/auth</code></h3>
+    <p>Login flow: request a nonce, sign it with your wallet, exchange the signature for a token pair.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Request Body</th><th>Response</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/auth/nonce</code></td><td>—</td><td><code>{ publicAddress }</code></td><td><code>{ message }</code></td><td>Creates the owner if the address is new. <code>message</code> is what the wallet needs to sign.</td></tr>
+          <tr><td>POST</td><td><code>/auth/login</code></td><td>—</td><td><code>{ publicAddress, signature }</code></td><td><code>{ accessToken, refreshToken }</code></td><td>Verifies the signature against the most recently issued nonce, then rotates it.</td></tr>
+          <tr><td>POST</td><td><code>/auth/refresh</code></td><td>🔒 (refresh token)</td><td>—</td><td><code>{ accessToken, refreshToken }</code></td><td>Send the <strong>refresh</strong> token as the bearer token. Rotates both tokens.</td></tr>
+          <tr><td>POST</td><td><code>/auth/logout</code></td><td>🔒</td><td>—</td><td>Empty success response</td><td>Revokes the stored refresh token.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="owners">Owners — <code>/owners</code></h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Body / Params</th><th>Response</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/owners</code></td><td>🔒</td><td><code>{ publicAddress }</code></td><td><code>Owner</code></td><td><code>409</code> if the address is already registered.</td></tr>
+          <tr><td>GET</td><td><code>/owners/:id</code></td><td>🔒</td><td><code>id</code> = owner UUID</td><td><code>Owner</code></td><td><code>404</code> if not found.</td></tr>
+          <tr><td>GET</td><td><code>/owners/address/:publicAddress</code></td><td>🔒</td><td><code>publicAddress</code> = <code>0x...</code></td><td><code>Owner</code></td><td><code>404</code> if not found.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="accounts">Accounts — <code>/accounts</code></h3>
+    <p>An owner can have <strong>at most one account per ticker</strong> (unique on <code>ownerId</code> + <code>ticker</code>).</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Body / Params</th><th>Response</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/accounts</code></td><td>🔒</td><td><code>{ ownerId, ticker, initialBalance? }</code></td><td><code>Account</code> (with a <code>balance</code> field)</td><td><code>ticker</code> is <code>PET</code> or <code>CAT</code>. <code>initialBalance</code> is an optional, non-negative integer string, defaulting to <code>"0"</code>. <code>409</code> on duplicate (ownerId, ticker).</td></tr>
+          <tr><td>GET</td><td><code>/accounts/:id</code></td><td>🔒</td><td><code>id</code> = account UUID</td><td><code>Account</code> (with a <code>balance</code> field)</td><td><code>404</code> if not found.</td></tr>
+          <tr><td>GET</td><td><code>/accounts/:id/balance</code></td><td>🔒</td><td><code>id</code> = account UUID</td><td><code>{ accountId, balance }</code></td><td>Cheaper than loading the whole account.</td></tr>
+          <tr><td>GET</td><td><code>/accounts/owner/:ownerId</code></td><td>🔒</td><td><code>ownerId</code> = owner UUID</td><td><code>Account[]</code></td><td>All accounts belonging to the owner.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="transfers">Transfers — <code>/transfers</code></h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Body / Params</th><th>Response</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/transfers</code></td><td>🔒</td><td><code>{ fromAccountId, toAccountId, amount }</code></td><td><code>{ transferId, status, amount, newFromBalance, newToBalance, createdAt }</code></td><td><code>amount</code> is a positive integer string. <code>400</code> on insufficient funds, transferring to the same account, or mismatched tickers. <code>404</code> if either account doesn't exist.</td></tr>
+          <tr><td>GET</td><td><code>/transfers/account/:accountId</code></td><td>🔒</td><td><code>accountId</code> = account UUID, query <code>status?</code> (<code>pending</code> | <code>completed</code> | <code>failed</code>)</td><td><code>Transfer[]</code></td><td>Transfers where the account is either the sender or the recipient, newest first.</td></tr>
+          <tr><td>GET</td><td><code>/transfers/:id</code></td><td>🔒</td><td><code>id</code> = transfer UUID</td><td><code>Transfer</code> (with a <code>ledgerEntries</code> field)</td><td><code>404</code> if not found.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="example-flow-curl">Example Flow (curl)</h3>
+    <div class="code-block">
+      <div class="code-label">bash</div>
+      <pre><code><span class="cmt"># 1. Request a nonce</span>
+curl -X POST http://localhost:3000/auth/nonce \
+  -H 'Content-Type: application/json' \
+  -d '{"publicAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}'
+<span class="cmt"># → { "message": "Sign this message to authenticate at Mini bank.\n\nAddress: ...\nNonce: ..." }</span>
+
+<span class="cmt"># 2. Sign `message` with the wallet's private key (e.g. via ethers.js), then log in</span>
+curl -X POST http://localhost:3000/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"publicAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "signature": "0x..."}'
+<span class="cmt"># → { "accessToken": "...", "refreshToken": "..." }</span>
+
+<span class="cmt"># 3. Call a protected endpoint</span>
+curl http://localhost:3000/accounts/owner/&lt;ownerId&gt; \
+  -H 'Authorization: Bearer &lt;accessToken&gt;'</code></pre>
+    </div>
+
+    <h2 id="architecture-notes"><span class="idx">10</span> Architecture Notes</h2>
+    <ul>
+      <li><strong>Balance is a cache; the ledger is the source of truth.</strong> <code>AccountBalance</code> is a cache for fast reads; every transfer also writes the corresponding <code>LedgerEntry</code> rows (debit + credit).</li>
+      <li><strong>Deadlock protection on transfers.</strong> Concurrent transfers between the same pair of accounts (in either direction) always lock rows in the same order (by comparing account IDs), rather than always "debit first, then credit."</li>
+      <li><strong>BigInt "on the wire."</strong> Balances/amounts are typed as <code>bigint</code> in the database and in the TypeScript types, but travel as decimal strings over JSON (<code>BigIntInterceptor</code> on the way out, a <code>@Transform</code> from <code>class-transformer</code> together with a custom <code>IsPositiveBigInt</code> validator on the way in).</li>
+    </ul>
+
+  </main>
+
+  <footer>Mini Bank API · README · © 2026 fbdayy / vishnev</footer>
+  </div>
+
+</div>
+</body>
+</html>
