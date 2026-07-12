@@ -339,6 +339,7 @@
   <header class="top">
     <div class="top-inner">
       <div class="eyebrow">
+        <p><a href="https://github.com/fbdayy/demo_backend-testing_2026/blob/main/README.md">Back to github README.md</a></p>
         <p>README · for review purposes</p>
         <p>English | <a href="https://fbdayy.github.io/demo_backend-testing_2026/index.ru">Русский</a></p>
     </div>
@@ -408,6 +409,7 @@
   <div class="content">
   <main>
 
+    <h1>Start of discussion</h1>
     <blockquote class="callout">
       <p>⚠️ <strong>This is a demo backend with simplified logic — it does not interact with blockchains and cannot move real funds.</strong></p>
       <p>The ETH address is used only to create a user account. All funds and balances exist solely inside the database, in a project-specific format.</p>
@@ -560,136 +562,4 @@ prisma-studio-1  | }</code></pre>
       <ol class="plain">
         <li>The project uses <code>pnpm</code> as its primary package manager. This is a deliberate choice — <code>npm</code>'s limits aren't enough for installing dependencies in this environment.</li>
         <li>Because of regional restrictions, I configured <code>.env</code> to use a Chinese mirror <code>registry</code> for installing <code>pnpm</code> packages. You can disable or change the mirror in the same file.</li>
-        <li>At the time of publishing, I worked around Docker Hub access restrictions in Russia by configuring the Docker daemon — it's worth reading up on this online. Personally, I added this mirror to its configuration:</li>
-      </ol>
-    </blockquote>
-
-    <div class="code-block">
-      <div class="code-label">json</div>
-      <pre><code>{
-  "registry-mirrors": ["https://mirror.gcr.io"]
-}</code></pre>
-    </div>
-
-    <h3 id="installation-steps">Installation Steps</h3>
-    <p>1. Set up environment variables (for example, in the <code>.env</code> file):</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Variable</th><th>Description</th><th>Example</th></tr></thead>
-        <tbody>
-          <tr><td><code>POSTGRES_USER</code></td><td>PostgreSQL user</td><td><code>postgres</code></td></tr>
-          <tr><td><code>POSTGRES_PASSWORD</code></td><td>PostgreSQL user password</td><td><code>changeme</code></td></tr>
-          <tr><td><code>POSTGRES_DB</code></td><td>Database name</td><td><code>app_db</code></td></tr>
-          <tr><td><code>POSTGRES_PORT</code></td><td>PostgreSQL port (optional)</td><td><code>5432</code> (default)</td></tr>
-          <tr><td><code>DATABASE_URL</code></td><td>Prisma's PostgreSQL connection string</td><td><code>postgresql://postgres:changeme@postgres:5432/app_db</code></td></tr>
-          <tr><td><code>NODE_ENV</code></td><td>Runtime environment</td><td><code>development</code></td></tr>
-          <tr><td><code>BACKEND_PORT</code></td><td>Server HTTP port</td><td><code>3000</code></td></tr>
-          <tr><td><code>JWT_ACCESS_SECRET</code></td><td>Secret for signing access tokens</td><td><code>changeme</code></td></tr>
-          <tr><td><code>JWT_REFRESH_SECRET</code></td><td>Secret for signing refresh tokens</td><td><code>changeme</code></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p>2. Build and start the docker containers:</p>
-    <div class="code-block"><pre><code>docker compose up --build</code></pre></div>
-
-    <p>3. Create the DB migration:</p>
-    <div class="code-block"><pre><code>mb pnpm --filter=backend exec prisma migrate dev --name init</code></pre></div>
-
-    <p>4. Run the tests:</p>
-    <div class="code-block"><pre><code>mb pnpm --filter=backend run test</code></pre></div>
-
-    <h2 id="api-docs-swagger"><span class="idx">08</span> API Documentation (Swagger)</h2>
-    <p>Interactive OpenAPI documentation is available at <strong><code>/api</code></strong> once the app is running (e.g. <code>http://localhost:3000/api</code>). Each route is grouped by tag (<code>auth</code>, <code>owners</code>, <code>accounts</code>, <code>transfers</code>) with request/response schemas and example payloads. Protected routes expect a bearer token — get one via <code>POST /auth/login</code>, then click <strong>Authorize</strong> in the Swagger UI and paste it in.</p>
-
-    <h2 id="api-reference"><span class="idx">09</span> API Reference</h2>
-    <p>All request/response bodies are JSON. Fields of type <code>bigint</code> in the database (<code>balance</code>, <code>amount</code>) are serialized in responses as <strong>strings</strong> (via <code>BigIntInterceptor</code>), and are accepted the same way in requests — as strings containing a decimal integer.</p>
-    <p>🔒 = requires <code>Authorization: Bearer &lt;accessToken&gt;</code> (<code>AccessTokenGuard</code>).</p>
-
-    <h3 id="auth">Auth — <code>/auth</code></h3>
-    <p>Login flow: request a nonce, sign it with your wallet, exchange the signature for a token pair.</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Request Body</th><th>Response</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td>POST</td><td><code>/auth/nonce</code></td><td>—</td><td><code>{ publicAddress }</code></td><td><code>{ message }</code></td><td>Creates the owner if the address is new. <code>message</code> is what the wallet needs to sign.</td></tr>
-          <tr><td>POST</td><td><code>/auth/login</code></td><td>—</td><td><code>{ publicAddress, signature }</code></td><td><code>{ accessToken, refreshToken }</code></td><td>Verifies the signature against the most recently issued nonce, then rotates it.</td></tr>
-          <tr><td>POST</td><td><code>/auth/refresh</code></td><td>🔒 (refresh token)</td><td>—</td><td><code>{ accessToken, refreshToken }</code></td><td>Send the <strong>refresh</strong> token as the bearer token. Rotates both tokens.</td></tr>
-          <tr><td>POST</td><td><code>/auth/logout</code></td><td>🔒</td><td>—</td><td>Empty success response</td><td>Revokes the stored refresh token.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3 id="owners">Owners — <code>/owners</code></h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Body / Params</th><th>Response</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td>POST</td><td><code>/owners</code></td><td>🔒</td><td><code>{ publicAddress }</code></td><td><code>Owner</code></td><td><code>409</code> if the address is already registered.</td></tr>
-          <tr><td>GET</td><td><code>/owners/:id</code></td><td>🔒</td><td><code>id</code> = owner UUID</td><td><code>Owner</code></td><td><code>404</code> if not found.</td></tr>
-          <tr><td>GET</td><td><code>/owners/address/:publicAddress</code></td><td>🔒</td><td><code>publicAddress</code> = <code>0x...</code></td><td><code>Owner</code></td><td><code>404</code> if not found.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3 id="accounts">Accounts — <code>/accounts</code></h3>
-    <p>An owner can have <strong>at most one account per ticker</strong> (unique on <code>ownerId</code> + <code>ticker</code>).</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Body / Params</th><th>Response</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td>POST</td><td><code>/accounts</code></td><td>🔒</td><td><code>{ ownerId, ticker, initialBalance? }</code></td><td><code>Account</code> (with a <code>balance</code> field)</td><td><code>ticker</code> is <code>PET</code> or <code>CAT</code>. <code>initialBalance</code> is an optional, non-negative integer string, defaulting to <code>"0"</code>. <code>409</code> on duplicate (ownerId, ticker).</td></tr>
-          <tr><td>GET</td><td><code>/accounts/:id</code></td><td>🔒</td><td><code>id</code> = account UUID</td><td><code>Account</code> (with a <code>balance</code> field)</td><td><code>404</code> if not found.</td></tr>
-          <tr><td>GET</td><td><code>/accounts/:id/balance</code></td><td>🔒</td><td><code>id</code> = account UUID</td><td><code>{ accountId, balance }</code></td><td>Cheaper than loading the whole account.</td></tr>
-          <tr><td>GET</td><td><code>/accounts/owner/:ownerId</code></td><td>🔒</td><td><code>ownerId</code> = owner UUID</td><td><code>Account[]</code></td><td>All accounts belonging to the owner.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3 id="transfers">Transfers — <code>/transfers</code></h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Body / Params</th><th>Response</th><th>Notes</th></tr></thead>
-        <tbody>
-          <tr><td>POST</td><td><code>/transfers</code></td><td>🔒</td><td><code>{ fromAccountId, toAccountId, amount }</code></td><td><code>{ transferId, status, amount, newFromBalance, newToBalance, createdAt }</code></td><td><code>amount</code> is a positive integer string. <code>400</code> on insufficient funds, transferring to the same account, or mismatched tickers. <code>404</code> if either account doesn't exist.</td></tr>
-          <tr><td>GET</td><td><code>/transfers/account/:accountId</code></td><td>🔒</td><td><code>accountId</code> = account UUID, query <code>status?</code> (<code>pending</code> | <code>completed</code> | <code>failed</code>)</td><td><code>Transfer[]</code></td><td>Transfers where the account is either the sender or the recipient, newest first.</td></tr>
-          <tr><td>GET</td><td><code>/transfers/:id</code></td><td>🔒</td><td><code>id</code> = transfer UUID</td><td><code>Transfer</code> (with a <code>ledgerEntries</code> field)</td><td><code>404</code> if not found.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3 id="example-flow-curl">Example Flow (curl)</h3>
-    <div class="code-block">
-      <div class="code-label">bash</div>
-      <pre><code><span class="cmt"># 1. Request a nonce</span>
-curl -X POST http://localhost:3000/auth/nonce \
-  -H 'Content-Type: application/json' \
-  -d '{"publicAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"}'
-<span class="cmt"># → { "message": "Sign this message to authenticate at Mini bank.\n\nAddress: ...\nNonce: ..." }</span>
-
-<span class="cmt"># 2. Sign `message` with the wallet's private key (e.g. via ethers.js), then log in</span>
-curl -X POST http://localhost:3000/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"publicAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "signature": "0x..."}'
-<span class="cmt"># → { "accessToken": "...", "refreshToken": "..." }</span>
-
-<span class="cmt"># 3. Call a protected endpoint</span>
-curl http://localhost:3000/accounts/owner/&lt;ownerId&gt; \
-  -H 'Authorization: Bearer &lt;accessToken&gt;'</code></pre>
-    </div>
-
-    <h2 id="architecture-notes"><span class="idx">10</span> Architecture Notes</h2>
-    <ul>
-      <li><strong>Balance is a cache; the ledger is the source of truth.</strong> <code>AccountBalance</code> is a cache for fast reads; every transfer also writes the corresponding <code>LedgerEntry</code> rows (debit + credit).</li>
-      <li><strong>Deadlock protection on transfers.</strong> Concurrent transfers between the same pair of accounts (in either direction) always lock rows in the same order (by comparing account IDs), rather than always "debit first, then credit."</li>
-      <li><strong>BigInt "on the wire."</strong> Balances/amounts are typed as <code>bigint</code> in the database and in the TypeScript types, but travel as decimal strings over JSON (<code>BigIntInterceptor</code> on the way out, a <code>@Transform</code> from <code>class-transformer</code> together with a custom <code>IsPositiveBigInt</code> validator on the way in).</li>
-    </ul>
-
-  </main>
-
-  <footer>Mini Bank API · README · © 2026 fbdayy / vishnev</footer>
-  </div>
-
-</div>
-</body>
-</html>
+        <li>At the time of publishing, I worked around Docker Hub access restrictions in Russia by configurin
